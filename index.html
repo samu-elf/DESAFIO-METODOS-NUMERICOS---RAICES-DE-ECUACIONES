@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Numérica Avanzada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        .font-math { font-family: 'Fira Code', monospace; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans">
+
+    <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white p-6 shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex items-center gap-4">
+            <div class="p-2 bg-white/10 rounded-lg">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold tracking-tight">Calculadora de Métodos Numéricos</h1>
+                <p class="text-blue-200 text-sm">Resolución de ecuaciones no lineales f(x) = 0</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-6 space-y-8">
+        
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <h2 class="font-bold text-slate-700">Configuración del Problema</h2>
+                <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">Modo Interactivo</span>
+            </div>
+
+            <div class="p-6">
+                <div id="errorBox" class="hidden bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-r shadow-sm flex items-start gap-3" role="alert">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div>
+                        <p class="font-bold">Error en el cálculo</p>
+                        <p id="errorMessage" class="text-sm">Algo salió mal.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">Problemas Predefinidos</label>
+                        <select id="problemSelect" class="w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition cursor-pointer">
+                            <option value="1">x³ - e^(0.8x) = 20</option>
+                            <option value="2">3sin(0.5x) - 0.5x + 2 = 0</option>
+                            <option value="3">x³ - x²e^(-0.5x) - 3x = -1</option>
+                            <option value="4">cos²x - 0.5xe^(0.3x) + 5 = 0</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-2">Método Numérico</label>
+                        <select id="methodSelect" class="w-full p-3 bg-blue-50 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition cursor-pointer font-medium text-blue-900">
+                            <option value="secant" selected>🔹 Secante (Recomendado)</option>
+                            <option value="bisection">🔸 Bisección (Lento pero seguro)</option>
+                            <option value="newton">⚡ Newton-Raphson (Rápido)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-6 relative group">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2">Función f(x)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-math italic">f(x) =</span>
+                        <input type="text" id="equationInput" class="w-full p-4 pl-16 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-lg font-math tracking-wide text-slate-800 placeholder-slate-400 shadow-sm group-hover:border-blue-300 transition" placeholder="x^3 - 2x - 5">
+                    </div>
+                    <div class="mt-2 flex gap-2 text-xs text-slate-500 flex-wrap">
+                        <span class="bg-slate-100 px-2 py-1 rounded border">sin()</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded border">cos()</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded border">exp()</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded border">log()</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded border">sqrt()</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded border">^</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded border">pi</span>
+                        <span class="bg-slate-100 px-2 py-1 rounded border">e</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div>
+                        <label id="labelA" class="block text-sm font-medium text-slate-600 mb-1">Punto Inicial (x₀)</label>
+                        <input type="number" step="any" id="inputA" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-math">
+                    </div>
+
+                    <div id="containerB">
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Punto Inicial (x₁)</label>
+                        <input type="number" step="any" id="inputB" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-math">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Tolerancia (Error)</label>
+                        <input type="number" step="1e-6" id="inputTolerance" value="0.0001" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-math">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Iteraciones Máx.</label>
+                        <input type="number" id="inputMaxIter" value="100" class="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-math">
+                    </div>
+                </div>
+
+                <button id="solveBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg hover:shadow-blue-500/30 active:scale-[0.99] flex justify-center items-center gap-3 text-lg">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    Calcular Raíz
+                </button>
+            </div>
+        </div>
+
+        <div id="resultsContainer" class="hidden fade-in space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-indigo-500">
+                    <p class="text-sm text-indigo-600 font-bold uppercase tracking-wider mb-1">Raíz Encontrada</p>
+                    <p id="resRoot" class="text-3xl font-math text-slate-800 break-all">-</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-emerald-500">
+                    <p class="text-sm text-emerald-600 font-bold uppercase tracking-wider mb-1">Iteraciones</p>
+                    <p id="resIter" class="text-3xl font-math text-slate-800">-</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
+                    <p class="text-sm text-blue-600 font-bold uppercase tracking-wider mb-1">Estado</p>
+                    <p id="resState" class="text-xl font-bold text-slate-800 mt-1">-</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                    <h3 class="font-bold text-lg text-slate-700">Comportamiento Gráfico</h3>
+                    <button id="downloadBtn" class="text-sm bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 hover:text-blue-600 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Descargar CSV
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div class="relative h-96 w-full">
+                        <canvas id="chartCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-200 bg-slate-50">
+                    <h3 class="font-bold text-lg text-slate-700">Tabla de Iteraciones Detallada</h3>
+                </div>
+                <div class="overflow-x-auto p-0">
+                    <table class="w-full text-sm text-left text-slate-600">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-100 border-b">
+                            <tr id="tableHeaderRow"></tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 font-math text-xs">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-slate-200">
+            
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-indigo-100">
+                <div class="bg-indigo-600 p-4 text-white">
+                    <h3 class="font-bold text-lg flex items-center gap-2">
+                        <span>🔹 Método de la Secante</span>
+                    </h3>
+                    <p class="text-indigo-100 text-xs mt-1">Método Abierto</p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase mb-2">Fórmula Iterativa</p>
+                        <div class="bg-slate-100 p-3 rounded text-center font-math text-sm text-slate-800 overflow-x-auto">
+                            x<sub>i+1</sub> = x<sub>i</sub> - <span class="frac">f(x<sub>i</sub>)(x<sub>i</sub> - x<sub>i-1</sub>)</span> / <span class="frac">(f(x<sub>i</sub>) - f(x<sub>i-1</sub>))</span>
+                        </div>
+                    </div>
+                    <ul class="text-sm space-y-2 text-slate-600">
+                        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> No requiere calcular la derivada analítica.</li>
+                        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Convergencia superlineal (1.618).</li>
+                        <li class="flex gap-2"><span class="text-red-500 font-bold">✗</span> Requiere dos puntos iniciales (x₀, x₁).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-sky-100">
+                <div class="bg-sky-600 p-4 text-white">
+                    <h3 class="font-bold text-lg flex items-center gap-2">
+                        <span>⚡ Newton-Raphson</span>
+                    </h3>
+                    <p class="text-sky-100 text-xs mt-1">Método Abierto</p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase mb-2">Fórmula Iterativa</p>
+                        <div class="bg-slate-100 p-3 rounded text-center font-math text-sm text-slate-800">
+                            x<sub>i+1</sub> = x<sub>i</sub> - f(x<sub>i</sub>) / f'(x<sub>i</sub>)
+                        </div>
+                    </div>
+                    <ul class="text-sm space-y-2 text-slate-600">
+                        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Convergencia cuadrática (muy rápida).</li>
+                        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Solo requiere un punto inicial (x₀).</li>
+                        <li class="flex gap-2"><span class="text-red-500 font-bold">✗</span> Falla si f'(x) ≈ 0.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 border border-orange-100">
+                <div class="bg-orange-500 p-4 text-white">
+                    <h3 class="font-bold text-lg flex items-center gap-2">
+                        <span>🔸 Bisección</span>
+                    </h3>
+                    <p class="text-orange-100 text-xs mt-1">Método Cerrado</p>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <p class="text-xs font-bold text-slate-500 uppercase mb-2">Lógica</p>
+                        <div class="bg-slate-100 p-3 rounded text-center font-math text-sm text-slate-800">
+                            c = (a + b) / 2
+                        </div>
+                    </div>
+                    <ul class="text-sm space-y-2 text-slate-600">
+                        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Convergencia garantizada.</li>
+                        <li class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Simple y robusto.</li>
+                        <li class="flex gap-2"><span class="text-red-500 font-bold">✗</span> Convergencia lenta.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 py-8 mt-12 text-center text-sm">
+        <p>Calculadora de Métodos Numéricos &copy; 2023. Optimizada para uso educativo.</p>
+    </footer>
+
+    <script>
+        // --- LOGICA JAVASCRIPT ---
+
+        const showError = (msg) => {
+            const errorBox = document.getElementById('errorBox');
+            document.getElementById('errorMessage').innerText = msg;
+            errorBox.classList.remove('hidden');
+            errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        const clearError = () => {
+            document.getElementById('errorBox').classList.add('hidden');
+        };
+
+        const problems = {
+            '1': { eq: 'x^3 - exp(0.8*x) - 20', a: '0', b: '8' },
+            '2': { eq: '3*sin(0.5*x) - 0.5*x - 2', a: '0', b: '10' },
+            '3': { eq: 'x^3 - x^2*exp(-0.5*x) - 3*x + 1', a: '-2', b: '5' },
+            '4': { eq: 'cos(x)^2 - 0.5*x*exp(0.3*x) - 5', a: '-5', b: '0' }
+        };
+
+        let chartInstance = null;
+        let currentResults = null;
+
+        // Compilador matemático seguro
+        const compileFunction = (expr) => {
+            try {
+                let sanitized = expr.replace(/\^/g, '**');
+                sanitized = sanitized.replace(/(\d)([a-z\(])/g, '$1*$2'); // 2x -> 2*x
+                sanitized = sanitized.replace(/(\))([a-z\d])/g, '$1*$2'); // )x -> )*x
+                
+                const mathFunctions = ['sin', 'cos', 'tan', 'log', 'sqrt', 'abs', 'exp', 'asin', 'acos', 'atan'];
+                mathFunctions.forEach(fn => {
+                    const regex = new RegExp(`\\b${fn}\\b`, 'g');
+                    sanitized = sanitized.replace(regex, `Math.${fn}`);
+                });
+
+                sanitized = sanitized.replace(/\bpi\b/g, 'Math.PI');
+                sanitized = sanitized.replace(/\be\b/g, 'Math.E');
+
+                return new Function('x', `return ${sanitized};`);
+            } catch (e) {
+                console.error(e);
+                throw new Error('Error de sintaxis en la ecuación.');
+            }
+        };
+
+        const calculateDerivative = (func, x) => {
+            const h = 1e-5;
+            return (func(x + h) - func(x - h)) / (2 * h);
+        };
+
+        // --- ALGORITMOS ---
+
+        const bisectionMethod = (func, a, b, tol, maxIt) => {
+            const iterations = [];
+            let aVal = parseFloat(a);
+            let bVal = parseFloat(b);
+            if(isNaN(aVal) || isNaN(bVal)) throw new Error('Valores a y b inválidos');
+            
+            let fa = func(aVal);
+            let fb = func(bVal);
+            if (fa * fb > 0) throw new Error('f(a) y f(b) deben tener signos opuestos');
+
+            for (let i = 0; i < maxIt; i++) {
+                const c = (aVal + bVal) / 2;
+                const fc = func(c);
+                const error = Math.abs(bVal - aVal);
+
+                iterations.push({ i: i+1, a: aVal.toFixed(6), b: bVal.toFixed(6), xr: c.toFixed(6), 'f(xr)': fc.toExponential(4), error: error.toExponential(4) });
+
+                if (error < tol || Math.abs(fc) < 1e-12) return { root: c, iterations, converged: true };
+                (fa * fc < 0) ? (bVal = c, fb = fc) : (aVal = c, fa = fc);
+            }
+            return { root: (aVal + bVal)/2, iterations, converged: false };
+        };
+
+        const newtonRaphson = (func, x0, tol, maxIt) => {
+            const iterations = [];
+            let x = parseFloat(x0);
+            if(isNaN(x)) throw new Error('x0 inválido');
+
+            for (let i = 0; i < maxIt; i++) {
+                const fx = func(x);
+                const fpx = calculateDerivative(func, x);
+                if (Math.abs(fpx) < 1e-12) throw new Error('Derivada cero. Método falla.');
+                
+                const xNew = x - fx / fpx;
+                const error = Math.abs(xNew - x);
+                iterations.push({ i: i+1, xi: x.toFixed(6), 'f(xi)': fx.toExponential(4), "f'(xi)": fpx.toExponential(4), xi_next: xNew.toFixed(6), error: error.toExponential(4) });
+
+                if (error < tol) return { root: xNew, iterations, converged: true };
+                x = xNew;
+            }
+            return { root: x, iterations, converged: false };
+        };
+
+        const secantMethod = (func, x0, x1, tol, maxIt) => {
+            const iterations = [];
+            let xp = parseFloat(x0); // x prev
+            let xc = parseFloat(x1); // x current
+            if(isNaN(xp) || isNaN(xc)) throw new Error('Se requieren dos puntos iniciales');
+
+            for (let i = 0; i < maxIt; i++) {
+                const fp = func(xp);
+                const fc = func(xc);
+                if (Math.abs(fc - fp) < 1e-12) throw new Error('División por cero (f(x1) ≈ f(x0))');
+
+                const xNew = xc - fc * (xc - xp) / (fc - fp);
+                const error = Math.abs(xNew - xc);
+
+                iterations.push({ i: i+1, xi_prev: xp.toFixed(6), xi: xc.toFixed(6), 'f(xi)': fc.toExponential(4), xi_next: xNew.toFixed(6), error: error.toExponential(4) });
+
+                if (error < tol) return { root: xNew, iterations, converged: true };
+                xp = xc;
+                xc = xNew;
+            }
+            return { root: xc, iterations, converged: false };
+        };
+
+        // --- UI ---
+
+        function updateUIForMethod(method) {
+            const containerB = document.getElementById('containerB');
+            const labelA = document.getElementById('labelA');
+            const labelB = document.querySelector('#containerB label');
+            
+            if (method === 'newton') {
+                containerB.classList.add('hidden');
+                labelA.innerText = 'Punto Inicial (x₀)';
+            } else if (method === 'secant') {
+                containerB.classList.remove('hidden');
+                labelA.innerText = 'Primer Punto (x₀)';
+                labelB.innerText = 'Segundo Punto (x₁)';
+            } else { // bisection
+                containerB.classList.remove('hidden');
+                labelA.innerText = 'Límite Inferior (a)';
+                labelB.innerText = 'Límite Superior (b)';
+            }
+        }
+
+        function renderTable(data) {
+            const thead = document.getElementById('tableHeaderRow');
+            const tbody = document.getElementById('tableBody');
+            thead.innerHTML = ''; tbody.innerHTML = '';
+            if(!data.length) return;
+
+            Object.keys(data[0]).forEach(k => {
+                const th = document.createElement('th');
+                th.className = "px-4 py-3"; th.innerText = k;
+                thead.appendChild(th);
+            });
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                Object.values(row).forEach(v => {
+                    const td = document.createElement('td');
+                    td.className = "px-4 py-3 whitespace-nowrap border-b border-slate-100"; td.innerText = v;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderChart(func, a, b, root) {
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            
+            let start = parseFloat(a); let end = parseFloat(b);
+            if (isNaN(start) || isNaN(end)) { start = root - 5; end = root + 5; } 
+            else { 
+                const pad = Math.abs(end - start) * 0.5 || 2;
+                start -= pad; end += pad;
+            }
+
+            const points = [];
+            const step = (end - start) / 100;
+            for(let x=start; x<=end; x+=step) {
+                try {
+                    const y = func(x);
+                    if(Math.abs(y) < 500) points.push({x, y});
+                } catch(e){}
+            }
+
+            if(chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        { label: 'f(x)', data: points, showLine: true, borderColor: '#4f46e5', tension: 0.3, pointRadius: 0 },
+                        { label: 'Raíz', data: [{x: root, y: 0}], backgroundColor: '#ef4444', pointRadius: 6 },
+                        { label: 'Eje X', data: [{x: start, y:0}, {x: end, y:0}], showLine:true, borderColor:'#94a3b8', borderDash:[5,5], pointRadius:0 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // --- EVENTOS ---
+
+        document.getElementById('problemSelect').addEventListener('change', (e) => {
+            const p = problems[e.target.value];
+            document.getElementById('equationInput').value = p.eq;
+            document.getElementById('inputA').value = p.a;
+            document.getElementById('inputB').value = p.b;
+            clearError();
+        });
+
+        document.getElementById('methodSelect').addEventListener('change', (e) => {
+            updateUIForMethod(e.target.value);
+        });
+
+        document.getElementById('solveBtn').addEventListener('click', () => {
+            clearError();
+            document.getElementById('resultsContainer').classList.add('hidden');
+
+            const eq = document.getElementById('equationInput').value;
+            const method = document.getElementById('methodSelect').value;
+            const valA = document.getElementById('inputA').value;
+            const valB = document.getElementById('inputB').value;
+            const tol = parseFloat(document.getElementById('inputTolerance').value);
+            const maxIt = parseInt(document.getElementById('inputMaxIter').value);
+
+            try {
+                if(!eq.trim()) throw new Error("Ingrese una ecuación.");
+                const fn = compileFunction(eq);
+                let res;
+
+                if(method === 'secant') res = secantMethod(fn, valA, valB, tol, maxIt);
+                else if(method === 'newton') res = newtonRaphson(fn, valA, tol, maxIt);
+                else if(method === 'bisection') res = bisectionMethod(fn, valA, valB, tol, maxIt);
+
+                currentResults = res;
+                
+                document.getElementById('resultsContainer').classList.remove('hidden');
+                document.getElementById('resRoot').innerText = res.root.toFixed(8);
+                document.getElementById('resIter').innerText = res.iterations.length;
+                
+                const st = document.getElementById('resState');
+                st.innerText = res.converged ? "Convergió Exitoxamente" : "No Convergió";
+                st.className = res.converged ? "text-xl font-bold text-emerald-600 mt-1" : "text-xl font-bold text-red-600 mt-1";
+
+                renderTable(res.iterations);
+                
+                let pltA = valA, pltB = valB;
+                if(method === 'newton') { pltB = parseFloat(valA) + 2; }
+                renderChart(fn, pltA, pltB, res.root);
+
+                document.getElementById('resultsContainer').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (e) {
+                showError(e.message);
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if(!currentResults) return;
+            let csv = "data:text/csv;charset=utf-8," + Object.keys(currentResults.iterations[0]).join(",") + "\n";
+            currentResults.iterations.forEach(r => csv += Object.values(r).join(",") + "\n");
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", "resultados.csv");
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        });
+
+        // INICIALIZACIÓN POR DEFECTO: SECANTE
+        const p1 = problems['1'];
+        document.getElementById('equationInput').value = p1.eq;
+        document.getElementById('inputA').value = p1.a;
+        document.getElementById('inputB').value = p1.b;
+        updateUIForMethod('secant');
+
+    </script>
+</body>
+</html>
